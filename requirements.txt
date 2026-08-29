@@ -1,6 +1,5 @@
-Flask==3.0.0
-Flask-Cors==4.0.0
-python-telegram-bot==20.7
-httpx==0.26.0
-requests==2.31.0
-upstash-redis==1.1.0
+Flask
+Flask-Cors
+python-telegram-bot>=20.7
+requests
+upstash-redis
