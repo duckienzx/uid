@@ -3,7 +3,7 @@ import uuid
 import re
 import requests
 import threading
-from flask import Flask, request, Response
+from flask import Flask, request, Response, redirect
 from flask_cors import CORS
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
@@ -15,13 +15,18 @@ RENDER_DOMAIN = "https://uid-yskb.onrender.com"
 app = Flask(__name__)
 CORS(app)
 
+# Bộ xử lý lỗi toàn cục tránh crash Flask
+@app.errorhandler(Exception)
+def handle_exception(e):
+    print(f"Flask Error: {e}")
+    return "Server Error", 500
+
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if str(update.effective_chat.id) != ADMIN_CHAT_ID:
         return
     msg = (
         "🤖 **BOT LẤY UDID THIẾT BỊ ĐANG HOẠT ĐỘNG**\n\n"
-        f"🔗 **Link lấy UDID:** `{RENDER_DOMAIN}/get-udid-profile`\n\n"
-        "Khi người dùng cài Profile từ Safari, mã UDID sẽ tự động gửi về đây!"
+        f"🔗 **Link lấy UDID:** `{RENDER_DOMAIN}/get-udid-profile`"
     )
     await update.message.reply_text(msg, parse_mode="Markdown")
 
@@ -65,20 +70,24 @@ def get_udid_profile():
 @app.route('/receive-udid', methods=['POST'])
 def receive_udid():
     try:
-        raw_data = request.get_data().decode('latin1')
+        # Nhận dữ liệu thô và decode an toàn với ignore lỗi ký tự lạ
+        raw_bytes = request.get_data()
+        raw_data = raw_bytes.decode('latin1', errors='ignore')
+        
+        # Trích xuất đoạn XML plist do iOS đóng gói
         match = re.search(r'<\?xml.*?</plist>', raw_data, re.DOTALL)
         if match:
             plist_xml = match.group(0)
             
-            udid_match = re.search(r'<key>UDID</key>\s*<string>(.*?)</string>', plist_xml)
-            product_match = re.search(r'<key>PRODUCT</key>\s*<string>(.*?)</string>', plist_xml)
-            version_match = re.search(r'<key>VERSION</key>\s*<string>(.*?)</string>', plist_xml)
-            name_match = re.search(r'<key>DEVICE_NAME</key>\s*<string>(.*?)</string>', plist_xml)
+            udid_m = re.search(r'<key>UDID</key>\s*<string>([^<]+)</string>', plist_xml)
+            prod_m = re.search(r'<key>PRODUCT</key>\s*<string>([^<]+)</string>', plist_xml)
+            vers_m = re.search(r'<key>VERSION</key>\s*<string>([^<]+)</string>', plist_xml)
+            name_m = re.search(r'<key>DEVICE_NAME</key>\s*<string>([^<]+)</string>', plist_xml)
             
-            udid = udid_match.group(1) if udid_match else "Không xác định"
-            product = product_match.group(1) if product_match else "Không xác định"
-            version = version_match.group(1) if version_match else "Không xác định"
-            dev_name = name_match.group(1) if name_match else "iPhone"
+            udid = udid_m.group(1).strip() if udid_m else "Không rõ"
+            product = prod_m.group(1).strip() if prod_m else "iOS Device"
+            version = vers_m.group(1).strip() if vers_m else "N/A"
+            dev_name = name_m.group(1).strip() if name_m else "iPhone"
 
             msg = (
                 f"📱 **THIẾT BỊ MỚI VỪA GỬI UDID!**\n\n"
@@ -88,16 +97,21 @@ def receive_udid():
                 f"⚙️ **iOS:** `{version}`"
             )
             
-            requests.post(
-                f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
-                json={"chat_id": ADMIN_CHAT_ID, "text": msg, "parse_mode": "Markdown"}
-            )
-            
-            return "", 301, {"Location": f"{RENDER_DOMAIN}/success"}
+            # Gửi thông báo về Telegram
+            try:
+                requests.post(
+                    f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
+                    json={"chat_id": ADMIN_CHAT_ID, "text": msg, "parse_mode": "Markdown"},
+                    timeout=10
+                )
+            except Exception as tg_err:
+                print(f"Lỗi gửi Telegram: {tg_err}")
+
+        # Bắt buộc chuyển hướng 301 theo chuẩn OTA của Apple
+        return redirect(f"{RENDER_DOMAIN}/success", code=301)
     except Exception as e:
         print(f"Lỗi phân tích UDID: {e}")
-        
-    return "Lỗi xử lý UDID", 400
+        return redirect(f"{RENDER_DOMAIN}/success", code=301)
 
 @app.route('/success', methods=['GET'])
 def success_page():
@@ -108,7 +122,7 @@ def success_page():
         <div style="background:white;padding:40px;border-radius:20px;box-shadow:0 10px 30px rgba(0,0,0,0.08);max-width:350px;">
             <div style="font-size:50px;margin-bottom:15px;">✅</div>
             <h2 style="margin:0 0 10px;color:#1a1a1a;">Đã lấy UDID thành công!</h2>
-            <p style="color:#666;font-size:14px;line-height:1.5;">Thông tin thiết bị đã được gửi về Telegram của quản trị viên.</p>
+            <p style="color:#666;font-size:14px;line-height:1.5;">Thông tin thiết bị đã được ghi nhận và gửi về Telegram.</p>
         </div>
     </body>
     </html>
@@ -134,6 +148,5 @@ if __name__ == '__main__':
         .pool_timeout(60.0)
         .build()
     )
-    
     tg_app.add_handler(CommandHandler("start", start_command))
     tg_app.run_polling(drop_pending_updates=True, timeout=30)
