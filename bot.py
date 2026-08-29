@@ -8,7 +8,6 @@ from flask_cors import CORS
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 
-# Cấu hình Token & Admin ID
 BOT_TOKEN = os.environ.get("BOT_TOKEN", "8525386643:AAFhrmnkUmamGJgWZg4MHNjt8znEfaqlU-E").strip()
 ADMIN_CHAT_ID = os.environ.get("ADMIN_CHAT_ID", "7126654319").strip()
 RENDER_DOMAIN = "https://uid-yskb.onrender.com"
@@ -16,21 +15,16 @@ RENDER_DOMAIN = "https://uid-yskb.onrender.com"
 app = Flask(__name__)
 CORS(app)
 
-# ==================== TELEGRAM BOT COMMANDS ====================
-
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if str(update.effective_chat.id) != ADMIN_CHAT_ID:
         return
     msg = (
         "🤖 **BOT LẤY UDID THIẾT BỊ ĐANG HOẠT ĐỘNG**\n\n"
         f"🔗 **Link lấy UDID:** `{RENDER_DOMAIN}/get-udid-profile`\n\n"
-        "Khi người dùng cài Profile từ link này, mã UDID sẽ tự động gửi về đây!"
+        "Khi người dùng cài Profile từ Safari, mã UDID sẽ tự động gửi về đây!"
     )
     await update.message.reply_text(msg, parse_mode="Markdown")
 
-# ==================== WEB API LẤY UDID ====================
-
-# 1. Trả về file cấu hình Profile Service để iPhone trích xuất phần cứng
 @app.route('/get-udid-profile', methods=['GET'])
 def get_udid_profile():
     receive_url = f"{RENDER_DOMAIN}/receive-udid"
@@ -68,7 +62,6 @@ def get_udid_profile():
 </plist>'''
     return Response(xml_content, mimetype='application/x-apple-asymmetric-key-exchange')
 
-# 2. Nhận dữ liệu POST từ iOS, parse UDID và bắn về Telegram
 @app.route('/receive-udid', methods=['POST'])
 def receive_udid():
     try:
@@ -95,13 +88,11 @@ def receive_udid():
                 f"⚙️ **iOS:** `{version}`"
             )
             
-            # Gửi tin nhắn về Telegram
             requests.post(
                 f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
                 json={"chat_id": ADMIN_CHAT_ID, "text": msg, "parse_mode": "Markdown"}
             )
             
-            # Điều hướng Safari sau khi cài xong
             return "", 301, {"Location": f"{RENDER_DOMAIN}/success"}
     except Exception as e:
         print(f"Lỗi phân tích UDID: {e}")
