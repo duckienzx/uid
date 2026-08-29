@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Xác minh thiết bị - Duc Kien DNS</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+    
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Fira Code', monospace; -webkit-tap-highlight-color: transparent; }
+        
+        body { 
+            min-height: 100vh; display: flex; justify-content: center; align-items: center; 
+            background-color: #fdfaf5; background-image: radial-gradient(#dedbd4 1.5px, transparent 1.5px); 
+            background-size: 24px 24px; padding: 20px 12px; color: #24292e; position: relative; overflow-x: hidden; 
+        }
+        
+        /* ----- CẤU HÌNH STICKER ----- */
+        .sticker {
+            position: fixed; z-index: 5; pointer-events: none;
+            animation: floatSticker 6s ease-in-out infinite;
+            filter: drop-shadow(0 12px 15px rgba(0,0,0,0.08));
+        }
+        @keyframes floatSticker {
+            0%, 100% { transform: translateY(0) rotate(var(--rot)); }
+            50% { transform: translateY(-12px) rotate(var(--rot)); }
+        }
+        
+        .stk-1  { top: 12%; left: 18%; width: 65px; --rot: -25deg; animation-delay: 0s; }
+        .stk-2  { top: 8%; right: 15%; width: 55px; --rot: 15deg; animation-delay: -2s; }
+        .stk-4  { top: 25%; right: 28%; width: 90px; --rot: 8deg; animation-delay: -3.5s; }
+        .stk-7  { bottom: 35%; left: 12%; width: 110px; --rot: -18deg; animation-delay: -2.5s; }
+        .stk-10 { bottom: 30%; right: 42%; width: 80px; --rot: 25deg; animation-delay: -1.8s; }
+        .stk-15 { top: 20%; right: 45%; width: 65px; --rot: -18deg; animation-delay: -1.2s; }
+        .stk-24 { bottom: 15%; left: 45%; width: 48px; --rot: 18deg; animation-delay: -4.1s; }
+
+        /* ---------------- GIAO DIỆN CHÍNH ---------------- */
+        .mac-window { 
+            position: relative; z-index: 10; background: rgba(255, 255, 255, 0.4); 
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border: 2px solid rgba(255, 255, 255, 0.8); border-radius: 20px; 
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08); width: 100%; max-width: 420px; overflow: hidden; 
+        }
+        
+        .mac-header { background: rgba(246, 248, 250, 0.5); padding: 12px 16px; display: flex; align-items: center; border-bottom: 2px solid rgba(225, 228, 232, 0.5); position: relative; }
+        .mac-buttons { display: flex; gap: 8px; z-index: 2; }
+        .mac-btn { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+        .mac-btn.close { background: #ff5f56; } .mac-btn.minimize { background: #ffbd2e; } .mac-btn.maximize { background: #27c93f; }
+        .mac-title { position: absolute; left: 0; right: 0; text-align: center; font-size: 12px; font-weight: 600; color: #57606a; }
+        
+        .mac-body { padding: 30px 20px; text-align: center; }
+        
+        .icon-shield { font-size: 55px; margin-bottom: 10px; }
+        h1 { font-family: 'Nunito', -apple-system, BlinkMacSystemFont, sans-serif; font-size: 26px; font-weight: 900; color: #1f2328; margin-bottom: 6px; letter-spacing: -0.5px; }
+        p.subtitle { font-family: 'Nunito', -apple-system, BlinkMacSystemFont, sans-serif; font-size: 15px; font-weight: 700; color: #6e7781; margin-bottom: 24px; line-height: 1.4; }
+        
+        /* ----- NÚT TẢI PROFILE ----- */
+        .btn-submit { 
+            width: 100%; padding: 16px; border: 4px solid #ffffff; border-radius: 100px; 
+            background: #24292e; color: #ffffff; cursor: pointer; display: flex; justify-content: center; align-items: center; 
+            box-shadow: 0 8px 20px rgba(36, 41, 46, 0.3); transition: all 0.2s ease; margin-bottom: 20px;
+        }
+        .btn-submit span { font-family: 'Nunito', -apple-system, BlinkMacSystemFont, sans-serif !important; font-size: 20px !important; font-weight: 900 !important; letter-spacing: 0.5px; }
+        .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(36, 41, 46, 0.4); background: #1f2328; }
+        .btn-submit:active { transform: translateY(2px); }
+
+        /* HƯỚNG DẪN */
+        .guide-section { padding-top: 18px; border-top: 2px dashed rgba(225, 228, 232, 0.8); text-align: left; }
+        .guide-title { font-size: 13px; font-weight: 700; color: #1f2328; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+        .step-list { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+        .step-item { background: rgba(253, 250, 245, 0.6); border: 1px solid rgba(208, 215, 222, 0.8); border-radius: 10px; padding: 12px; }
+        .step-text { font-family: 'Nunito', -apple-system, BlinkMacSystemFont, sans-serif; font-size: 14px; font-weight: 700; color: #57606a; line-height: 1.45; }
+        .step-text b { color: #0969da; font-weight: 900; }
+    </style>
+</head>
+<body>
+
+    <!-- STICKERS (Giữ lại một vài sticker cho đẹp) -->
+    <img src="https://creators.locket.com/assets/ambassadors/bits/emoji-gold-heart.png" class="sticker stk-1" alt="Sticker">
+    <img src="https://creators.locket.com/assets/ambassadors/bits/emoji-smiling-hearts.png" class="sticker stk-2" alt="Sticker">
+    <img src="https://creators.locket.com/assets/ambassadors/bits/locket-logo-sticker.png" class="sticker stk-4" alt="Sticker">
+    <img src="https://creators.locket.com/assets/ambassadors/bits/pill-goodnight.png" class="sticker stk-7" alt="Sticker">
+    <img src="https://creators.locket.com/assets/ambassadors/bits/locket-yellow-tile.png" class="sticker stk-10" alt="Sticker">
+
+    <div class="mac-window">
+        <div class="mac-header">
+            <div class="mac-buttons"><span class="mac-btn close"></span><span class="mac-btn minimize"></span><span class="mac-btn maximize"></span></div>
+            <div class="mac-title">xac-minh — Duc Kien</div>
+        </div>
+
+        <div class="mac-body">
+            <div class="icon-shield">🛡️</div>
+            <h1>Xác minh iPhone</h1>
+            <p class="subtitle">Hệ thống cần thu thập mã UDID để định danh và cấp cấu hình DNS độc quyền.</p>
+            
+            <!-- NÚT GỌI API LẤY PROFILE -->
+            <button class="btn-submit" onclick="downloadUDID()">
+                <span>TẢI PROFILE LẤY UDID</span>
+            </button>
+
+            <div class="guide-section">
+                <div class="guide-title">📌 Hướng dẫn thao tác</div>
+                <ol class="step-list">
+                    <li class="step-item"><div class="step-text"><b>BƯỚC 1:</b> Mở trang web này bằng <b>Safari</b> và bấm nút tải ở trên. Bấm <i>Cho phép</i>.</div></li>
+                    <li class="step-item"><div class="step-text"><b>BƯỚC 2:</b> Vào <b>Cài đặt (Settings)</b> → <b>Đã tải về hồ sơ</b>.</div></li>
+                    <li class="step-item"><div class="step-text"><b>BƯỚC 3:</b> Bấm <b>Cài đặt</b>. Sau khi xong, máy sẽ tự động gửi mã về cho Bot Telegram của Admin.</div></li>
+                </ol>
+            </div>
+        </div>
+    </div>
+
+<script>
+    function downloadUDID() {
+        // Gọi API của Bot Python để tải file Profile Service
+        window.location.href = "https://bot-dns.onrender.com/get-udid-profile";
+    }
+</script>
+
+</body>
+</html>
